@@ -8,18 +8,162 @@ output:
 
 ## Loading and preprocessing the data
 
+Nowadays there are a lot of devices that collect information about personal activity. In this assigment we are going to make some exploratory data analysis in a dataset consist of the number of steps taken in a 5 minutes interval from an anonymous individual, collected each day during October and November of 2012.
+
+First of all we are going to load the activity dataset and take a look it.
+
+```{r loaddata}
+dfsteps <- read.csv(unz("activity.zip", "activity.csv"), header=T)
+str(dfsteps)
+```
+
+The dataset is a data frame with 3 variables and 17568 observations. The variables included in this dataset are:
+
+- `$steps`: an integer variable that shows the number of steps taking in a 5-minute interval (missing values are coded as NA)
+- `$date`: a factor variable with the date on which the measurement was taken in YYYY-MM-DD format. The variable has 61 levels, one for each day along October and November months.
+- `$interval`: an integer variable that identify the 5-minute interval in which measurement was taken.
+
+Let's go to extract a summary.
+
+```{r summary}
+summary(dfsteps)
+```
+
+The summary shows that the minimum number of steps in a 5-minute interval is zero, and the maximum is 806. The mean of steps in a 5-minute interval is 37.38, and the median is zero. And there are 2304 NAs, that means that we have 2304 5-minute intervals without information.
+
+About `$date`variable, it seems that there are 288 entries for each unique day. That would have sense, because there are 288 intervals of 5 minutes in a day. Let's go check if that number is repeated each day.
+
+```{r check$date}
+unique(summary(dfsteps$date))
+```
+
+Yes, we have `r unique(summary(dfsteps$date))` entries for each level of `$date`.
+
+About `$interval` variable, the minimum is zero and the maximum is 2355. That is strange, because if you start in zero and add 287 intervals of 5 minutes each (the amount of intervals of 5 minutes on a day), the maximum expected would be 1435.
+
+Let's go to examine `$interval` more deep in.
+
+```{r check$interval}
+unique(dfsteps$interval)
+```
+
+When the identifier reaches 55, the next integer is 100. When reaches 155 the next is 200. And so on. There are not tens above 55. After ten 55, it goes to the next hundred, or thousand number. This is because the identifier is playing like a timer, measuring the 5-minute intervals into an hour. When the timer reaches 55 minutes, the next time is not 60 minutes, but 1 hour and 0 minutes, expressed like 100. It is the same for 155 (1 hour and 55 minutes): the next time is 200 (2 hours and 0 minutes).
+
+The identifier allows to know the hour and minute where the interval was collected. So, 0 stand for 00:00:00, 450 stand for 04:50:00, 1430 stand for 14:30:00, and so on.
+
 
 
 ## What is mean total number of steps taken per day?
+
+First we will calculate the total steps taken each day, and we will save on a data frame.
+
+```{r stepsbyday}
+stepsbyday <- setNames(aggregate(steps~date, dfsteps, sum), c("day", "total.steps"))
+```
+
+Now, lets to make the histogram, choosing the Freedman-Diaconis rule to set the bin-width, one of options of the argument `breaks` on `hist` function. 
+
+```{r histogram, fig.width=10}
+hist(stepsbyday$total.steps, main = "Histogram of total steps taken by day", xlab = "Daily total steps", ylim = c(0, 25), las = 1, breaks = "FD", col = "darkslategray4", border = "darkslategray4")
+```
+
+The plot shows that there is a higher frequency of days in which was taken between 10000 and about 12500 steps.
+
+Let's see the mean and median of steps taken each day along October and November.
+
+```{r meanstepsbyday}
+aggregate(steps~date, dfsteps, function(x) c(mean = mean(x), median = median(x)), na.action = NULL)
+```
+
+The average daily steps varies along both months, but there are some days with a too low mean, which may show a kind of failure with the device that collect the information.
+
+The median value remains fixed in zero along two months. That means that in at least 50 % of the 5 minute intervals measured along every day, no steps were collected.
 
 
 
 ## What is the average daily activity pattern?
 
+Let's make a plot of the average number of steps taken on each 5 minutes interval, to see the daily activity pattern.
+
+First, we make a data frame with the data that we will plot.
+
+```{r stepsbytime}
+stepsbytime <- setNames(aggregate(steps~interval, dfsteps, mean), c("interval", "av.steps"))
+stepsbytime$hour <- as.POSIXct("0001-01-01 00:00:00") + seq(from = 0, by = 5, length.out = 288)*60
+```
+
+We are going to use `scales` package to make the plot.
+```{r getscales}
+if (!"scales" %in% installed.packages()) install.packages("scales")
+library("scales")
+```
+
+We will use `ggplot2` package to make this plot. 
+
+```{r getggplot2}
+if (!"ggplot2" %in% installed.packages()) install.packages("ggplot2")
+library("ggplot2")
+```
+
+Then we plot the daily activity pattern.
+
+```{r stepsbytimeplot, fig.width=10}
+ggplot(stepsbytime, aes(x = hour, y = av.steps)) + ggtitle("Daily activity pattern") + xlab("Time") + ylab("Average steps") + geom_line() + scale_x_datetime(breaks=date_breaks("1 hour"), labels = date_format("%H"))
+```
+
+It seems that the activity of the anonymous individual starts, on average, a little before of 6:00. The busiest time along the day is between 8:00 and 9:30 in the morning. In the afternoon, peaks of activity are observed around 12:00 , just before 16:00 and between 18:00 and 19:00. From 19:30 onward the activity begins to decline gradually.
+
+```{r maxstepsbytime}
+stepsbytime[stepsbytime$av.steps == max(stepsbytime$av.steps), 1:2]
+```
+
+The 5-minute interval with the maximum average of steps is 835, that is, the interval that collected data at 8:35 in the morning. The average steps recorded in this interval was `r round(max(stepsbytime$av.steps), 2)` steps.
+
 
 
 ## Imputing missing values
 
+As it discussed above, there are 2304 NAs, it is mean, 2304 rows with NAs. Therefore we have 2304 5-minute intervals without information. Let's see how they are distributed along the days.
+
+```{r NAsanalysis}
+aggregate(dfsteps$steps, list(dfsteps$date), function(x) sum(is.na(x)))
+```
+
+The missing pattern doesn't seem totally aleatory. There are eight complete days without information (288 NAs in each one). It is noted that there are missing the data for 1st, or day before, of each month.
+
+There are a lot of R packages imputate missing values in time series, but most of them work with multivariate time series, and its imputation's algorithms, that rely on relation between variables, are not suitables for univariate data ([Moritz et al., 2015](https://arxiv.org/abs/1510.03924v1)) such as we have here. Univariate time series algorithms have to use the own time series characteristics. Moritz and his colleagues review and propose some functions that allow to impute missing values in univariate time series, but for the sake of simplicity we will make a simpler technique.
+
+We will replace the NA of each interval by the average steps in this interval.
+
+To do this, first we will create a copy of our dataset, and then we will use like index the `stepsbytime` data frame that we obtained it previously, with the average steps of each interval.  
+
+```{r imputeNAs}
+dfsteps2 <- dfsteps
+dfsteps2$steps <- as.numeric(apply(dfsteps2, 1, function(x) ifelse(is.na(x[1]), stepsbytime$av.steps[stepsbytime$interval == as.numeric(x[3])], x[1])))
+```
+
+Now we will calculate again the total steps taken each day.
+
+```{r stepsbyday2}
+stepsbyday2 <- setNames(aggregate(steps~date, dfsteps2, sum), c("day", "total.steps"))
+```
+
+And we plot again an histogram with the total number of steps taken each day.
+
+```{r histogram2, fig.width=10}
+hist(stepsbyday2$total.steps, main = "Histogram of total steps taken by day\n(with imputate missing values)", xlab = "Daily total steps", ylim = c(0, 25), las = 1, breaks = "FD", col = "darkslategray4", border = "darkslategray4")
+```
+
+The distribution of histogram is almost the same as we got when we made it with missing values. The only difference is that there are more days in which was taken between 10000 and 12000 steps. This makes sense, because we have add eight complete days of average information, and therefore it has only affected to this area of the histogram, leaving everything else as it was.
+
+Let's see again the mean and median of steps taken each day along October and November.
+
+```{r meanstepsbyday2}
+aggregate(steps~date, dfsteps2, function(x) c(mean = mean(x), median = median(x)), na.action = NULL)
+```
+Now we can see that the median steps on the days which we have imputed values is 34.11. This is because zero is no longer the most repeated value in this days.
+
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
