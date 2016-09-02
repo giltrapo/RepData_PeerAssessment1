@@ -250,7 +250,7 @@ The 5-minute interval with the maximum average of steps is 835, that is, the int
 
 ## Imputing missing values
 
-As it discussed above, there are 2304 NAs, it is mean, 2304 rows with NAs. Therefore we have 2304 5-minute intervals without information. Let's see how they are distributed along the days.
+As it discussed above, there are 2304 NAs. Therefore we have 2304 5-minute intervals without information. Let's see how they are distributed along the days.
 
 
 ```r
@@ -322,13 +322,13 @@ aggregate(dfsteps$steps, list(dfsteps$date), function(x) sum(is.na(x)))
 ## 61 2012-11-30 288
 ```
 
-The missing pattern doesn't seem totally aleatory. There are eight complete days without information (288 NAs in each one). It is noted that there are missing the data for 1st, or day before, of each month.
+The missing pattern doesn't seem totally aleatory. There are eight complete days without information (288 NAs in each one). Also, data on the 1st of each month or the previous day is missing.
 
-There are a lot of R packages imputate missing values in time series, but most of them work with multivariate time series, and its imputation's algorithms, that rely on relation between variables, are not suitables for univariate data ([Moritz et al., 2015](https://arxiv.org/abs/1510.03924v1)) such as we have here. Univariate time series algorithms have to use the own time series characteristics. Moritz and his colleagues review and propose some functions that allow to impute missing values in univariate time series, but for the sake of simplicity we will make a simpler technique.
+There are plenty of R packages that assign missing values in time series, but most of them work with multivariate time series, and its imputation's algorithms, that rely on relation between variables, are not suitable for univariate data ([Moritz et al., 2015](https://arxiv.org/abs/1510.03924v1)) such as this dataset. Univariate time series algorithms have to use their own time series characteristics. Moritz and his colleagues propose some functions that allow to impute missing values in univariate time series, but for the sake of simplicity we will use a simpler technique.
 
 We will replace the NA of each interval by the average steps in this interval.
 
-To do this, first we will create a copy of our dataset, and then we will use like index the `stepsbytime` data frame that we obtained it previously, with the average steps of each interval.  
+To do this, first we will create a copy of our dataset, and then we will use `stepsbytime` data frame that we obtained it previously as index, with the average steps of each interval.  
 
 
 ```r
@@ -352,7 +352,7 @@ hist(stepsbyday2$total.steps, main = "Histogram of total steps taken by day\n(wi
 
 ![](PA1_template_files/figure-html/stepsbydayhist2-1.png)<!-- -->
 
-The distribution of histogram is almost the same as we got when we made it with missing values. The only difference is that there are more days in which was taken between 10000 and 12000 steps. This makes sense, because we have add eight complete days of average information, and therefore it has only affected to this area of the histogram, leaving everything else as it was.
+The distribution of histogram is practically identical to the one we plotted without replacing missing values. The only difference is that there are more days in the range 10000~12500 steps. This makes sense, because we have add eight complete days of average information, and therefore it has only affected to this area of the histogram, leaving everything else as it was.
 
 Let's see again the mean and median of steps taken each day along October and November.
 
@@ -425,7 +425,7 @@ aggregate(steps~date, dfsteps2, function(x) c(mean = mean(x), median = median(x)
 ## 60 2012-11-29 24.4687500    0.0000000
 ## 61 2012-11-30 37.3825996   34.1132075
 ```
-Now we can see that the median steps on the days which we have imputed values is 34.11. This is because zero is no longer the most repeated value in this days.
+Now we can see that the median steps on the days which we have newly assigned values is 34.11. This is because zero is no longer the most repeated value in these days.
 
 
 
@@ -433,7 +433,7 @@ Now we can see that the median steps on the days which we have imputed values is
 
 Let's to see if there are differences between the daily patterns of steps on weekdays and weekends.
 
-First we will add a new variable to data frame `dfsteps2`, that distinguishes weekdays and weekends.
+First we will add a new variable to data frame `dfsteps2`, that distinguishes weekdays from weekends.
 
 
 ```r
@@ -441,7 +441,7 @@ dfsteps2$daynames <- weekdays(as.Date(dfsteps2$date))
 dfsteps2$weekend <- as.factor(apply(dfsteps2, 1, function(x) ifelse(x[4] %in% c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'), "Weekday", "Weekend")))
 ```
 
-Now we have to calculate and save the mean of steps taken on each 5-minute interval by part of the week.
+Now we have to calculate and save the mean of steps taken on each 5-minute interval by type of day.
 
 
 ```r
@@ -449,7 +449,7 @@ stepsbytime2 <- setNames(aggregate(steps~interval + weekend, dfsteps2, mean), c(
 stepsbytime2$hour <- as.POSIXct("0001-01-01 00:00:00") + seq(from = 0, by = 5, length.out = 288)*60
 ```
 
-And for last, we can make a facet plot to compare the daily activity pattern between weekdays and weekend.
+And for last, we can create a facet plot to compare the daily activity pattern for weekdays and weekend.
 
 
 ```r
@@ -458,5 +458,5 @@ ggplot(stepsbytime2, aes(x = hour, y = av.steps)) + ggtitle("Daily activity patt
 
 ![](PA1_template_files/figure-html/stepsbytimetsplot2-1.png)<!-- -->
 
-The daily pattern of activity are differents, like we can see in the figure. On weekend, the activity begins a little bit after than on weekdays, and in the afternoon it extends too a little later. Moreover, more steps throughout all the day are perceived, on average, with a lot of peaks of activity spread over different time intervals.
+The daily pattern of activity are differents, like we can see in the figure. On weekends, the activity begins a little bit later compared to weekdays, and in the afternoon it also extends till later. Furthermore, a larger number of steps throughout all the day are recorded on average, with a lot of peaks of activity spread over different time intervals.
 
