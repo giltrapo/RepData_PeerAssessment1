@@ -3,9 +3,9 @@
 
 ## Loading and preprocessing the data
 
-Nowadays there are a lot of devices that collect information about personal activity. In this assigment we are going to make some exploratory data analysis in a dataset consist of the number of steps taken in a 5 minutes interval from an anonymous individual, collected each day during October and November of 2012.
+Nowadays there are a lot of devices that collect information about personal activity. In this assigment we are going to make some exploratory data analysis in a dataset that consist of the number of steps taken in a 5 minutes interval from an anonymous individual, collected each day during October and November of 2012.
 
-First of all we are going to load the activity dataset and take a look it.
+First of all we are going to load the activity dataset and take a look at it.
 
 
 ```r
@@ -26,7 +26,7 @@ The dataset is a data frame with 3 variables and 17568 observations. The variabl
 - `$date`: a factor variable with the date on which the measurement was taken in YYYY-MM-DD format. The variable has 61 levels, one for each day along October and November months.
 - `$interval`: an integer variable that identify the 5-minute interval in which measurement was taken.
 
-Let's go to extract a summary.
+Let's extract a summary.
 
 
 ```r
@@ -44,9 +44,9 @@ summary(dfsteps)
 ##  NA's   :2304     (Other)   :15840
 ```
 
-The summary shows that the minimum number of steps in a 5-minute interval is zero, and the maximum is 806. The mean of steps in a 5-minute interval is 37.38, and the median is zero. And there are 2304 NAs, that means that we have 2304 5-minute intervals without information.
+The summary shows that the minimum number of steps in a 5-minute interval is zero, and the maximum is 806. The mean of steps in a 5-minute interval is 37.38, and the median is zero. There alos are 2304 NAs. That meaning that we have 2304 5-minute intervals without information.
 
-About `$date`variable, it seems that there are 288 entries for each unique day. That would have sense, because there are 288 intervals of 5 minutes in a day. Let's go check if that number is repeated each day.
+About `$date`variable, it seems that there are 288 entries for each unique day. That makes sense, because there are 288 intervals of 5 minutes in a day. Let's check if that number is repeated each day.
 
 
 ```r
@@ -61,7 +61,7 @@ Yes, we have 288 entries for each level of `$date`.
 
 About `$interval` variable, the minimum is zero and the maximum is 2355. That is strange, because if you start in zero and add 287 intervals of 5 minutes each (the amount of intervals of 5 minutes on a day), the maximum expected would be 1435.
 
-Let's go to examine `$interval` more deep in.
+Let's examine `$interval` more deep in.
 
 
 ```r
@@ -92,22 +92,22 @@ unique(dfsteps$interval)
 ## [281] 2320 2325 2330 2335 2340 2345 2350 2355
 ```
 
-When the identifier reaches 55, the next integer is 100. When reaches 155 the next is 200. And so on. There are not tens above 55. After ten 55, it goes to the next hundred, or thousand number. This is because the identifier is playing like a timer, measuring the 5-minute intervals into an hour. When the timer reaches 55 minutes, the next time is not 60 minutes, but 1 hour and 0 minutes, expressed like 100. It is the same for 155 (1 hour and 55 minutes): the next time is 200 (2 hours and 0 minutes).
+When the identifier reaches 55, the next integer is 100, when it reaches 155 the next is 200, and so on. There are not tens above 55. After ten 55, it goes to the next hundred, or thousand number. This is because the identifier is playing like a timer, measuring the 5-minute intervals into an hour. When the timer reaches 55 minutes, the next time is not 60 minutes, but 1 hour and 0 minutes, expressed like 100. It is the same for 155 (1 hour and 55 minutes): the next time is 200 (2 hours and 0 minutes).
 
 The identifier allows to know the hour and minute where the interval was collected. So, 0 stand for 00:00:00, 450 stand for 04:50:00, 1430 stand for 14:30:00, and so on.
 
 
 
-## What is mean total number of steps taken per day?
+## What is the mean total number of steps taken per day?
 
-First we will calculate the total steps taken each day, and we will save on a data frame.
+First, we will calculate the total steps taken each day, which we will save on a data frame.
 
 
 ```r
 stepsbyday <- setNames(aggregate(steps~date, dfsteps, sum), c("day", "total.steps"))
 ```
 
-Now, lets to make the histogram, choosing the Freedman-Diaconis rule to set the bin-width, one of options of the argument `breaks` on `hist` function. 
+Now, lets build the histogram, choosing the Freedman-Diaconis rule to set the bin-width, one of options of the argument `breaks` on `hist` function. 
 
 
 ```r
@@ -116,7 +116,7 @@ hist(stepsbyday$total.steps, main = "Histogram of total steps taken by day", xla
 
 ![](PA1_template_files/figure-html/stepsbydayhist-1.png)<!-- -->
 
-The plot shows that there is a higher frequency of days in which was taken between 10000 and about 12500 steps.
+The plot shows that there is a higher frequency of days between 10000 and about 12500 steps.
 
 Let's see the mean and median of steps taken each day along October and November.
 
@@ -190,9 +190,9 @@ aggregate(steps~date, dfsteps, function(x) c(mean = mean(x), median = median(x))
 ## 61 2012-11-30         NA           NA
 ```
 
-The average daily steps varies along both months, but there are some days with a too low mean, which may show a kind of failure with the device that collect the information.
+The average daily steps varies along both months, but there are some days with a too low means, which may show a kind of failure with the device that collects the information.
 
-The median value remains fixed in zero along two months. That means that in at least 50 % of the 5 minute intervals measured along every day, no steps were collected.
+The median value remains fixed at zero along two months. That means that in at least 50 % of the 5-minute intervals measured along every day, no steps were recorded.
 
 
 
@@ -200,7 +200,7 @@ The median value remains fixed in zero along two months. That means that in at l
 
 Let's make a plot of the average number of steps taken on each 5 minutes interval, to see the daily activity pattern.
 
-First, we make a data frame with the data that we will plot.
+First, we create a data frame with the data to be plotted.
 
 
 ```r
@@ -215,7 +215,7 @@ if (!"scales" %in% installed.packages()) install.packages("scales")
 library("scales")
 ```
 
-We will use `ggplot2` package to make this plot. 
+And we will use `ggplot2` package too. 
 
 
 ```r
@@ -441,7 +441,7 @@ dfsteps2$daynames <- weekdays(as.Date(dfsteps2$date))
 dfsteps2$weekend <- as.factor(apply(dfsteps2, 1, function(x) ifelse(x[4] %in% c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'), "Weekday", "Weekend")))
 ```
 
-Now we have to calculate and save the mean of steps taken on each 5 minutes interval by part of the week.
+Now we have to calculate and save the mean of steps taken on each 5-minute interval by part of the week.
 
 
 ```r
@@ -453,10 +453,10 @@ And for last, we can make a facet plot to compare the daily activity pattern bet
 
 
 ```r
-ggplot(stepsbytime2, aes(x = hour, y = av.steps)) + ggtitle("Daily activity pattern") + xlab("Time") + ylab("Average steps") + geom_line() + scale_x_datetime(breaks=date_breaks("1 hour"), labels = date_format("%H")) + facet_grid(weekend ~ .)
+ggplot(stepsbytime2, aes(x = hour, y = av.steps)) + ggtitle("Daily activity pattern by part of the week") + xlab("Time") + ylab("Average steps") + geom_line() + scale_x_datetime(breaks=date_breaks("1 hour"), labels = date_format("%H")) + facet_grid(weekend ~ .)
 ```
 
 ![](PA1_template_files/figure-html/stepsbytimetsplot2-1.png)<!-- -->
 
-
+The daily pattern of activity are differents, like we can see in the figure. On weekend, the activity begins a little bit after than on weekdays, and in the afternoon it extends too a little later. Moreover, more steps throughout all the day are perceived, on average, with a lot of peaks of activity spread over different time intervals.
 
