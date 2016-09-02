@@ -33,7 +33,7 @@ The summary shows that the minimum number of steps in a 5-minute interval is zer
 
 About `$date`variable, it seems that there are 288 entries for each unique day. That would have sense, because there are 288 intervals of 5 minutes in a day. Let's go check if that number is repeated each day.
 
-```{r check$date}
+```{r checkdatevar}
 unique(summary(dfsteps$date))
 ```
 
@@ -43,7 +43,7 @@ About `$interval` variable, the minimum is zero and the maximum is 2355. That is
 
 Let's go to examine `$interval` more deep in.
 
-```{r check$interval}
+```{r checkintervalvar}
 unique(dfsteps$interval)
 ```
 
@@ -57,13 +57,13 @@ The identifier allows to know the hour and minute where the interval was collect
 
 First we will calculate the total steps taken each day, and we will save on a data frame.
 
-```{r stepsbyday}
+```{r stepsbydaydf}
 stepsbyday <- setNames(aggregate(steps~date, dfsteps, sum), c("day", "total.steps"))
 ```
 
 Now, lets to make the histogram, choosing the Freedman-Diaconis rule to set the bin-width, one of options of the argument `breaks` on `hist` function. 
 
-```{r histogram, fig.width=10}
+```{r stepsbydayhist, fig.width=10}
 hist(stepsbyday$total.steps, main = "Histogram of total steps taken by day", xlab = "Daily total steps", ylim = c(0, 25), las = 1, breaks = "FD", col = "darkslategray4", border = "darkslategray4")
 ```
 
@@ -87,7 +87,7 @@ Let's make a plot of the average number of steps taken on each 5 minutes interva
 
 First, we make a data frame with the data that we will plot.
 
-```{r stepsbytime}
+```{r stepsbytimedf}
 stepsbytime <- setNames(aggregate(steps~interval, dfsteps, mean), c("interval", "av.steps"))
 stepsbytime$hour <- as.POSIXct("0001-01-01 00:00:00") + seq(from = 0, by = 5, length.out = 288)*60
 ```
@@ -107,7 +107,7 @@ library("ggplot2")
 
 Then we plot the daily activity pattern.
 
-```{r stepsbytimeplot, fig.width=10}
+```{r stepsbytimetsplot, fig.width=10}
 ggplot(stepsbytime, aes(x = hour, y = av.steps)) + ggtitle("Daily activity pattern") + xlab("Time") + ylab("Average steps") + geom_line() + scale_x_datetime(breaks=date_breaks("1 hour"), labels = date_format("%H"))
 ```
 
@@ -144,13 +144,13 @@ dfsteps2$steps <- as.numeric(apply(dfsteps2, 1, function(x) ifelse(is.na(x[1]), 
 
 Now we will calculate again the total steps taken each day.
 
-```{r stepsbyday2}
+```{r stepsbydaydf2}
 stepsbyday2 <- setNames(aggregate(steps~date, dfsteps2, sum), c("day", "total.steps"))
 ```
 
 And we plot again an histogram with the total number of steps taken each day.
 
-```{r histogram2, fig.width=10}
+```{r stepsbydayhist2, fig.width=10}
 hist(stepsbyday2$total.steps, main = "Histogram of total steps taken by day\n(with imputate missing values)", xlab = "Daily total steps", ylim = c(0, 25), las = 1, breaks = "FD", col = "darkslategray4", border = "darkslategray4")
 ```
 
@@ -166,4 +166,28 @@ Now we can see that the median steps on the days which we have imputed values is
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Let's to see if there are differences between the daily patterns of steps on weekdays and weekends.
+
+First we will add a new variable to data frame `dfsteps2`, that distinguishes weekdays and weekends.
+
+```{r weekendvar}
+dfsteps2$daynames <- weekdays(as.Date(dfsteps2$date))
+dfsteps2$weekend <- as.factor(apply(dfsteps2, 1, function(x) ifelse(x[4] %in% c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'), "Weekday", "Weekend")))
+```
+
+Now we have to calculate and save the mean of steps taken on each 5 minutes interval by part of the week.
+
+```{r stepsbytime2}
+stepsbytime2 <- setNames(aggregate(steps~interval + weekend, dfsteps2, mean), c("interval", "weekend", "av.steps"))
+stepsbytime2$hour <- as.POSIXct("0001-01-01 00:00:00") + seq(from = 0, by = 5, length.out = 288)*60
+```
+
+And for last, we can make a facet plot to compare the daily activity pattern between weekdays and weekend.
+
+```{r stepsbytimetsplot2, fig.width=10}
+ggplot(stepsbytime2, aes(x = hour, y = av.steps)) + ggtitle("Daily activity pattern by part of the week") + xlab("Time") + ylab("Average steps") + geom_line() + scale_x_datetime(breaks=date_breaks("1 hour"), labels = date_format("%H")) + facet_grid(weekend ~ .)
+```
+
+The daily pattern of activity are differents, like we can see in the figure. On weekend, the activity begins a little bit after that weekdays, and in the afternoon it extends too a little later. Moreover, more steps throughout all the day are perceived, on average, with a lot of peaks of activity spread over different time intervals.
 

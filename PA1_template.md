@@ -46,7 +46,7 @@ summary(dfsteps)
 
 The summary shows that the minimum number of steps in a 5-minute interval is zero, and the maximum is 806. The mean of steps in a 5-minute interval is 37.38, and the median is zero. And there are 2304 NAs, that means that we have 2304 5-minute intervals without information.
 
-About `$date`variable, it seems that there are 288 entries for each unique day. That would have sense, because there are 288 intervals of 5 minutes in a day. Let's go check it.
+About `$date`variable, it seems that there are 288 entries for each unique day. That would have sense, because there are 288 intervals of 5 minutes in a day. Let's go check if that number is repeated each day.
 
 
 ```r
@@ -114,7 +114,7 @@ Now, lets to make the histogram, choosing the Freedman-Diaconis rule to set the 
 hist(stepsbyday$total.steps, main = "Histogram of total steps taken by day", xlab = "Daily total steps", ylim = c(0, 25), las = 1, breaks = "FD", col = "darkslategray4", border = "darkslategray4")
 ```
 
-![](PA1_template_files/figure-html/histogram-1.png)<!-- -->
+![](PA1_template_files/figure-html/stepsbydayhist-1.png)<!-- -->
 
 The plot shows that there is a higher frequency of days in which was taken between 10000 and about 12500 steps.
 
@@ -230,7 +230,7 @@ Then we plot the daily activity pattern.
 ggplot(stepsbytime, aes(x = hour, y = av.steps)) + ggtitle("Daily activity pattern") + xlab("Time") + ylab("Average steps") + geom_line() + scale_x_datetime(breaks=date_breaks("1 hour"), labels = date_format("%H"))
 ```
 
-![](PA1_template_files/figure-html/stepsbytimeplot-1.png)<!-- -->
+![](PA1_template_files/figure-html/stepsbytimetsplot-1.png)<!-- -->
 
 It seems that the activity of the anonymous individual starts, on average, a little before of 6:00. The busiest time along the day is between 8:00 and 9:30 in the morning. In the afternoon, peaks of activity are observed around 12:00 , just before 16:00 and between 18:00 and 19:00. From 19:30 onward the activity begins to decline gradually.
 
@@ -350,7 +350,7 @@ And we plot again an histogram with the total number of steps taken each day.
 hist(stepsbyday2$total.steps, main = "Histogram of total steps taken by day\n(with imputate missing values)", xlab = "Daily total steps", ylim = c(0, 25), las = 1, breaks = "FD", col = "darkslategray4", border = "darkslategray4")
 ```
 
-![](PA1_template_files/figure-html/histogram2-1.png)<!-- -->
+![](PA1_template_files/figure-html/stepsbydayhist2-1.png)<!-- -->
 
 The distribution of histogram is almost the same as we got when we made it with missing values. The only difference is that there are more days in which was taken between 10000 and 12000 steps. This makes sense, because we have add eight complete days of average information, and therefore it has only affected to this area of the histogram, leaving everything else as it was.
 
@@ -430,4 +430,33 @@ Now we can see that the median steps on the days which we have imputed values is
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Let's to see if there are differences between the daily patterns of steps on weekdays and weekends.
+
+First we will add a new variable to data frame `dfsteps2`, that distinguishes weekdays and weekends.
+
+
+```r
+dfsteps2$daynames <- weekdays(as.Date(dfsteps2$date))
+dfsteps2$weekend <- as.factor(apply(dfsteps2, 1, function(x) ifelse(x[4] %in% c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'), "Weekday", "Weekend")))
+```
+
+Now we have to calculate and save the mean of steps taken on each 5 minutes interval by part of the week.
+
+
+```r
+stepsbytime2 <- setNames(aggregate(steps~interval + weekend, dfsteps2, mean), c("interval", "weekend", "av.steps"))
+stepsbytime2$hour <- as.POSIXct("0001-01-01 00:00:00") + seq(from = 0, by = 5, length.out = 288)*60
+```
+
+And for last, we can make a facet plot to compare the daily activity pattern between weekdays and weekend.
+
+
+```r
+ggplot(stepsbytime2, aes(x = hour, y = av.steps)) + ggtitle("Daily activity pattern") + xlab("Time") + ylab("Average steps") + geom_line() + scale_x_datetime(breaks=date_breaks("1 hour"), labels = date_format("%H")) + facet_grid(weekend ~ .)
+```
+
+![](PA1_template_files/figure-html/stepsbytimetsplot2-1.png)<!-- -->
+
+
 
